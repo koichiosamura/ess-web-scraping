@@ -661,7 +661,7 @@ reticulate::miniconda_path()
 To do this, you first have to indicate the location where your `Python` executable lives (this path should always end in `/bin/python` or `python.exe` on Windows):
 
 ```{r}
-python_location <- "/home/johannes/.local/share/r-miniconda/bin/python"
+python_location <- "/Users/Koichi/Library/r-miniconda/bin/python"
 # for Windows the path is usually "C:/Users/{user}/AppData/Local/r-miniconda/python.exe"
 ```
 

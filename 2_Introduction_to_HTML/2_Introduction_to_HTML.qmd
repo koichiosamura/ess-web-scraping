@@ -552,19 +552,19 @@ webpage <- "<html>
   read_html()
 
 # the headline
-headline <- html_elements(webpage, "")
+headline <- html_elements(webpage, "h1")
 # the author
-author <- html_elements(webpage, "")
+author <- html_elements(webpage, ".author")
 # the ordered list
-ordered_list <- html_elements(webpage, "")
+ordered_list <- html_elements(webpage, "ol")
 # all bullet points
-bullet_points <- html_elements(webpage, "")
+bullet_points <- html_elements(webpage, "li")
 # bullet points in unordered list
-bullet_points_unordered <- html_elements(webpage, "")
+bullet_points_unordered <- html_elements(webpage, "ul li")
 # bullet points in ordered list
-bullet_points_ordered <- html_elements(webpage, "")
+bullet_points_ordered <- html_elements(webpage, "ol li")
 # third bullet point in ordered list
-bullet_point_three_ordered <- html_elements(webpage, "")
+bullet_point_three_ordered <- html_elements(webpage, ".advice #three")
 ```
 
 
