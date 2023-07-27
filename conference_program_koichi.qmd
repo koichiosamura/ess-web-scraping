@@ -1,0 +1,103 @@
+---
+title: "conference_program_koichi"
+format: pdf
+editor: visual
+---
+
+## Conference: Latin American PolMeth III (2019)
+
+```{r}
+library(pdftools)
+polmeth <- pdf_data("https://polmeth.org/files/files/polmeth/files/2019-latin-polmeth.pdf", font_info = TRUE)
+polmeth[[1]]
+```
+
+```{r}
+# a workshop
+polmeth[[1]] |> 
+  filter(str_detect(text, "Workshop"))
+
+# a paper title
+polmeth[[1]] |> 
+  filter(str_detect(text, "Socio"))
+
+# a speaker name
+polmeth[[1]] |> 
+  filter(str_detect(text, "Matías"))
+
+# there are no co-authors in this conference
+
+# a word in the right column
+polmeth[[1]] |> 
+  filter(str_detect(text, "Police"))
+
+# a word on the right edge of the left column
+polmeth[[1]] |> 
+  filter(str_detect(text, "capacity"))
+```
+
+## Combining the columns
+
+```{r}
+tidy_page <- function(page) {
+  left_column <- page |> 
+    filter(x < 350) |> 
+    group_by(y) |> 
+    summarise(text = paste(text, collapse = " "),
+              font_name = list(unique(font_name)))
+  
+  right_column <- page |> 
+    filter(x > 350) |> 
+    group_by(y) |> 
+    summarise(text = paste(text, collapse = " "),
+              font_name = list(unique(font_name)))
+  
+  bind_rows(left_column, right_column)
+    
+}
+```
+
+## Finding and using patterns
+
+```{r}
+polmeth_data <- polmeth[1:2] |> 
+  # bring the text in the correct order on each page
+  map(tidy_page) |> 
+  bind_rows() |> 
+  # paper titles use a specific font, which make them easy to identify
+  mutate(paper_title = font_name == "Calibri")
+  # Panels start with the string panel and a large bold font
+  mutate(workshop_start = font_name == "Comfortaa-Bold" & str_detect(text, "Workshop")) |> 
+  # using cumsum, we count the TRUE values. One appears at the start of each panel
+  mutate(workshop = cumsum(workshop_start)) |> 
+  # we are not interested in the information before the first panel
+  filter(workshop > 0) |> 
+  group_by(workshop) |> 
+  # we can count the first appearance of a paper title to give the paper a unique id per panel
+  mutate(paper_nr = cumsum(paper_title & !lag(paper_title))) |> 
+  # now we can group the data using this id to make sure the authors are matched to the right paper
+  group_by(workshop, paper_nr) |> 
+  # summarised takes several elements and uses a function to return exactly one
+  summarise(
+    # we select all text where the paper_nr == 0, which is te panel title
+    workshop_title = paste(text[paper_nr == 0], collapse = " "),
+    # now we combine the text in the rows that have a paper title
+    workshop_title = paste(text[paper_title], collapse = " "),
+    # finally, we put the authors in a list. They are the text within a panel descript that uses one of two fonts
+    author = list(text[font_name %in% "Calibri-Italic"]),
+    .groups = "drop"
+  ) |> 
+  # we replace empty rows with NAs so we can fill them with the preeeding text
+  mutate(across(workshop_title:paper_title, function(x) ifelse(x == "", NA_character_, x))) |> 
+  fill(workshop_title) |> 
+  filter(paper_nr > 0) |> 
+  unnest(author)
+polmeth_data
+```
+
+Comments:
+I am stuck with the paper names, because they are squeezed into cells and with line breaks.
+Thus, the current code considers each line as a different paper. What could be done to fix this?
+
+Also, when running the current code, I get an error saying that R could not subset a column that does not exist (referring to "paper_title".
+However, that column was set at the beginning of this chunk.
