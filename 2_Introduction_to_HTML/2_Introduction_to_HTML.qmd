@@ -9,9 +9,12 @@ format:
     scrollable: true
     code-line-numbers: true
     slide-number: c/t
+    logo: https://essexsummerschool.com/wp-content/uploads/2016/03/essex_logo-mobile.svg
+    self-contained: true
 execute:
   cache: true
   echo: true
+highlight-style: pygments
 bibliography: ../references.bib
 ---
 
@@ -49,6 +52,10 @@ We will:
 - Download data from a website
 - Retrieve data via an API
 - Scrape the (unstructured) Data
+
+:::{.fragment}
+![](media/web-mining.png)
+:::
 :::
 
 ::: {.column width="50%"}
@@ -57,11 +64,13 @@ We will:
 :::
 ::::
 
+
+
 ## Web Scraping
 
 ::: {.incremental}
 - A technique to extract specific data from a web page
-  - Get the author, title, date and body of an only news article
+  - Get the author, title, date and body of an online news article
   - A table from a website (like Wikipedia)
 - This can include hyperlinks which you can systematically go through
 - You can write a "robot" that systematically extracts data and saves it in a format convenient for analysis
@@ -122,9 +131,6 @@ Some web pages are easier to scrape than others:
 :::
 ::::
 
-## Exercises
-
-1. Discuss in class: What data would you like to be able to retrieve after the course and why?
 
 # Implications of Web Scraping
 ## Legal
@@ -172,7 +178,17 @@ Disallow: /about/art-in-parliament/   # do not crawl any URLs that start with /a
   - are you harming anyone by obtaining (or distributing) the data?
   - do you really need everything or are parts of the data sufficient (e.g., can you preselect cases or ignore variables)
 
-## Exercises
+## Advice?
+
+Legal and ethical advice is rare and complicated to give.
+A good *opinion* piece about it is @freelonAPI2018.
+It is worth reading, but can be summarised in three general pieces of advice
+
+- use authorized methods whenever possible
+- do not confuse terms of service compliance with data protection
+- understand the risks of violating terms of service
+
+## Exercises 1
 
 Twitter recently made access to their API punishingly expensive and stopped free academic access for research.
 If you wanted to do research on Twitter data through web-scraping anyway what implications would that have:
@@ -443,11 +459,11 @@ You can select HTML elements by their tags
 library(rvest)
 read_html("data/example.html") |> 
   html_elements("p") |> 
-  html_text()
+  html_text2()
 ```
 
-- written without the `<>`
-- in theory, arbitrary tags are possible, but commonly people use `<p>` (paragraph), `<br>` (line break), `<h1>`, `<h2>`, `<h3>`, ... (first, second, third, ... level headline), `<b>` (bold), `<i>` (italic), `<img>` (image), `<href>` (hyperlink), and a couple more.
+- to select them, **tags** are written without the `<>`
+- in theory, arbitrary tags are possible, but commonly people use `<p>` (paragraph), `<br>` (line break), `<h1>`, `<h2>`, `<h3>`, ... (first, second, third, ... level headline), `<b>` (bold), `<i>` (italic), `<img>` (image), `<a>` (hyperlink), and a couple more.
 
 ## Using attributes
 
@@ -481,7 +497,7 @@ read_html("data/example.html") %>%
 
 ## Extracting attributes
 
-Instead of selecting by arrtibute, you can also extract an attribute:
+Instead of selecting by arrtibute, you can also extract one or all attributes:
 
 ```{r}
 read_html("data/example.html") |> 
@@ -489,13 +505,25 @@ read_html("data/example.html") |>
   html_attr("href")
 ```
 
+```{r}
+read_html("data/example.html") |> 
+  html_elements("a") |> 
+  html_attrs()
+```
+
 ## Chaining selectors
 
-If there is more than one element that fits your selector, but you only want one of them, see if you can make your selection more specific by chaining selectors with `>`:
+If there is more than one element that fits your selector, but you only want one of them, see if you can make your selection more specific by chaining selectors with `>` (for the immediate next one) or an empty space:
 
 ```{r}
 read_html("data/example.html") |> 
   html_elements(".author>a") |> 
+  html_attr("href")
+```
+
+```{r}
+read_html("data/example.html") |> 
+  html_elements(".author a") |> 
   html_attr("href")
 ```
 
@@ -507,14 +535,15 @@ There are quite a lot of [CSS selectors](https://www.w3schools.com/cssref/css_se
 |---------------|-------------------|--------------------------------------------------------|
 | element/tag   | `table`           | **all** `<table>` elements                             |
 | class         | `.someTable`      | **all** elements with `class="someTable"`              |
-| id            | `#table-1         | **unique** element with `id="table-1"`                 |
+| id            | `#table-1`        | **unique** element with `id="table-1"`                 |
+| element.class | `tr.headerRow`    | **all** `<tr>` elements with the `someTable` class     |
 | element.class | `tr.headerRow`    | **all** `<tr>` elements with the `someTable` class     |
 | class1.class2 | `.someTable.blue` | **all** elements with the `someTable` AND `blue` class |
 | class1 > tag  | `.table-1 > tr`   | **all** elements with `tr` with `.table-1` as parent   |
 | class1 + tag  | `.top-row + tr`   | **first** elements with `tr` following `.top-row`      |
 
 
-## Exercises
+## Exercises 2
 
 1. Add another image and another paragraph to `data/example.html` and display it in your browser
 2. Add a second level headline to the page
@@ -525,6 +554,7 @@ There are quite a lot of [CSS selectors](https://www.w3schools.com/cssref/css_se
 
 
 ```{r}
+#| eval: false
 library(rvest)
 webpage <- "<html>
 <body>
@@ -550,29 +580,50 @@ webpage <- "<html>
 </body>
 </html>" |> 
   read_html()
-
-# the headline
-headline <- html_elements(webpage, "h1")
-# the author
-author <- html_elements(webpage, ".author")
-# the ordered list
-ordered_list <- html_elements(webpage, "ol")
-# all bullet points
-bullet_points <- html_elements(webpage, "li")
-# bullet points in unordered list
-bullet_points_unordered <- html_elements(webpage, "ul li")
-# bullet points in ordered list
-bullet_points_ordered <- html_elements(webpage, "ol li")
-# third bullet point in ordered list
-bullet_point_three_ordered <- html_elements(webpage, ".advice #three")
 ```
 
+```{r}
+#| eval: false
+# the headline
+headline <- html_elements(webpage, "")
+headline
+# the author
+author <- html_elements(webpage, "")
+author
+# the ordered list
+ordered_list <- html_elements(webpage, "")
+ordered_list
+# all bullet points
+bullet_points <- html_elements(webpage, "")
+bullet_points
+# bullet points in unordered list
+bullet_points_unordered <- html_elements(webpage, "")
+bullet_points_unordered
+# elements in ordered list
+bullet_points_ordered <- html_elements(webpage, "")
+bullet_points_ordered
+# third bullet point in ordered list
+bullet_point_three_ordered <- html_elements(webpage, "")
+bullet_point_three_ordered
+```
+
+
+# Homework
+
+You did not come to class to just scrape exercise pages.
+You probably had some initial data and/or research question in mind.
+Please write a short abstract (~200-400 words) on what you want to accomplish with the web scraping skill you will learn here, so we can try and incorporate the necessary tools in one of the sessions this week.
+The abstract should include what data can be found on the website and what potential research quesions you have in mind.
+
+Deadline: Today midnight!
 
 # Wrap Up
 
 Save some information about the session for reproducibility.
 
 ```{r}
+#| code-fold: true
+#| code-summary: "Show Session Info"
 sessionInfo()
 ```
 
