@@ -1,0 +1,59 @@
+---
+title: "first_dataset_koichi"
+author: "Koichi Osamura"
+format: pdf
+editor: visual
+---
+
+## Members of the Brazilian Chamber of Deputies in 52nd to 55th legislatures (2003 - 2018)
+
+```{r}
+# Loading packages
+library(httr2)
+library(rvest)
+library(tidyverse, warn.conflicts = FALSE)
+```
+
+```{r}
+curl_translate("curl -X GET \
+               'https://dadosabertos.camara.leg.br/api/v2/deputados?idLegislatura=52&idLegislatura=53&idLegislatura=54&idLegislatura=55&ordem=ASC&ordenarPor=nome' \
+               -H 'accept: application/json'")
+```
+
+```{r}
+chamber <- request("https://dadosabertos.camara.leg.br/api/v2/deputados?idLegislatura=52&idLegislatura=53&idLegislatura=54&idLegislatura=55&ordem=ASC&ordenarPor=nome") |>
+  req_method("GET") |>
+  req_headers(
+    accept = "application/json",
+  ) |>
+  req_perform() |>
+  resp_body_json()
+```
+
+```{r}
+pluck(chamber, "dados", 1)
+```
+
+```{r}
+df <- pluck(chamber, "dados")
+deputies <- tibble(
+                  id           = map_int(df, function(i) pluck(i, "id")),
+                  dep_name     = map_chr(df, function(i) pluck(i, "nome")),
+                  party        = map_chr(df, function(i) pluck(i, "siglaPartido")),
+                  state        = map_chr(df, function(i) pluck(i, "siglaUf")),
+                  legislature  = map_int(df, function(i) pluck(i, "idLegislatura")),
+                  dep_uri      = map_chr(df, function(i) pluck(i, "uri")),
+                  party_uri    = map_chr(df, function(i) pluck(i, "uriPartido")),
+                  photo        = map_chr(df, function(i) pluck(i, "urlFoto"))
+)
+```
+
+
+
+
+
+
+
+
+
+
